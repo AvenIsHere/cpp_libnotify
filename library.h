@@ -4,7 +4,6 @@
 #include <functional>
 #include <string>
 #include <memory>
-#include <glibmm>
 
 extern "C" {
     typedef struct _NotifyNotification NotifyNotification; // NOLINT(bugprone-reserved-identifier)
@@ -33,9 +32,10 @@ public:
     explicit Notification(NotifyNotification* given_notification);
 
     // setters (they return references themselves to make chaining possible)
-    Notification& set_notification(NotifyNotification*& given_notification);
+    Notification& set_notification(notify_notification given_notification);
     Notification& set_summary(const std::string& given_summary);
     Notification& set_body(const std::string& given_body);
+    Notification& set_icon(const std::string& given_icon);
     Notification& set_urgency(Urgency given_urgency);
     Notification& set_timeout(int given_timeout);
     Notification& set_hint(const std::string& given_key);
@@ -46,7 +46,7 @@ public:
                              ActionCallback given_callback);
 
     // getters
-    [[nodiscard]] NotifyNotification* get_NotifyNotification() const;
+    [[nodiscard]] const NotifyNotification* get_NotifyNotification() const;
     [[nodiscard]] std::string get_summary() const;
     [[nodiscard]] std::string get_body() const;
     [[nodiscard]] std::string get_icon() const;
