@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Aven Furness
+// cpp-libnotify is available from https://github.com/AvenIsHere/cpp_libnotify
+// Licensed under the MIT License.
+
 #ifndef CPP_LIBNOTIFY_LIBRARY_H
 #define CPP_LIBNOTIFY_LIBRARY_H
 
