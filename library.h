@@ -12,7 +12,7 @@
 #include <mutex>
 
 extern "C" {
-typedef struct _NotifyNotification NotifyNotification; // NOLINT(bugprone-reserved-identifier)
+    typedef struct _NotifyNotification NotifyNotification; // NOLINT(bugprone-reserved-identifier)
 }
 
 class Notification {
@@ -32,7 +32,7 @@ private:
     using notify_notification = std::unique_ptr<NotifyNotification, Notification_Deleter>;
     using ActionCallback = std::function<void(std::shared_ptr<State>, const std::string &)>;
 
-    struct State {
+    struct State : std::enable_shared_from_this<State> {
         notify_notification m_notification;
         std::map<std::string, ActionCallback> m_callbacks;
 
@@ -69,7 +69,7 @@ public:
 
     Notification &set_hint(const std::string &given_key, int given_value);
 
-    Notification &set_hint(const std::string &given_key, std::string &given_value);
+    Notification &set_hint(const std::string &given_key, const std::string &given_value);
 
     Notification &set_hint(const std::string &given_key, bool given_value);
 

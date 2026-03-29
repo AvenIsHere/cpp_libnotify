@@ -1,39 +1,40 @@
 #include "library.h"
 #include <libnotify/notify.h>
 
+std::string Notification::app_name;
+std::once_flag Notification::initialised;
+
 void Notification::Notification_Deleter::operator()(NotifyNotification *n) const {
     if (n) {
         g_object_unref(n);
     }
 }
 
-std::string get_process_name() {
-    char result[PATH_MAX];
-    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-    if (count != -1) {
-        std::string path(result, count);
-        return path.substr(path.find_last_of('/') + 1);
-    }
-    return "";
-}
-
 void Notification::ensure_initialised() {
-    if (!notify_is_initted()) {
-        notify_init(get_process_name().c_str());
-    }
+    std::call_once(initialised, []() {
+        if (!notify_is_initted()) {
+            notify_init(app_name.c_str());
+            std::atexit([]() {
+                if (notify_is_initted()) {
+                    notify_uninit();
+                }
+            });
+        }
+    });
 }
 
 Notification::Notification(const std::string &given_summary, const std::string &given_body,
     const std::string &given_icon) {
     ensure_initialised();
-    this->state->m_notification.reset(
-        notify_notification_new(
+    NotifyNotification* notification = notify_notification_new(
             given_summary.c_str(),
             given_body.c_str(),
-            given_icon.c_str()));
+            given_icon.c_str());
+    this->state = std::make_shared<State>(notification);
 }
 
 Notification::Notification(notify_notification given_notification) {
+    this->state = std::make_shared<State>(given_notification.release());
 }
 
 Notification & Notification::set_notification(notify_notification given_notification) {
@@ -68,14 +69,15 @@ Notification & Notification::set_icon(const std::string &given_icon) {
     return *this;
 }
 
-std::map<Notification::Urgency, NotifyUrgency> urgency_map = {
-    {Notification::Urgency::CRITICAL, NOTIFY_URGENCY_CRITICAL},
-    {Notification::Urgency::LOW, NOTIFY_URGENCY_LOW},
-    {Notification::Urgency::NORMAL, NOTIFY_URGENCY_NORMAL}
-};
-
-Notification & Notification::set_urgency(Urgency given_urgency) {
-    notify_notification_set_urgency(this->state->m_notification.get(), urgency_map.at(given_urgency));
+Notification & Notification::set_urgency(const Urgency given_urgency) {
+    NotifyUrgency lib_urgency;
+    switch (given_urgency) {
+        case Urgency::CRITICAL: lib_urgency = NOTIFY_URGENCY_CRITICAL; break;
+        case Urgency::LOW: lib_urgency = NOTIFY_URGENCY_LOW; break;
+        case Urgency::NORMAL:
+        default: lib_urgency = NOTIFY_URGENCY_NORMAL; break;
+    }
+    notify_notification_set_urgency(this->state->m_notification.get(), lib_urgency);
     return *this;
 }
 
@@ -84,39 +86,47 @@ Notification & Notification::set_timeout(const int given_timeout) {
     return *this;
 }
 
-Notification & Notification::set_hint(const std::string &given_key, int given_value) {
+Notification & Notification::set_hint(const std::string &given_key, const int given_value) {
+    GVariant* value_g_variant = g_variant_new_int32(given_value);
     notify_notification_set_hint(
         this->state->m_notification.get(),
         given_key.c_str(),
-        reinterpret_cast<GVariant *>(given_value));
+        value_g_variant);
     return *this;
 }
 
-Notification & Notification::set_hint(const std::string &given_key, std::string &given_value) {
+Notification & Notification::set_hint(const std::string &given_key, const std::string &given_value) {
+    GVariant* value_g_variant = g_variant_new_string(given_value.c_str());
     notify_notification_set_hint(
         this->state->m_notification.get(),
         given_key.c_str(),
-        reinterpret_cast<GVariant *>(given_value.data()));
+        value_g_variant);
     return *this;
 }
 
 Notification & Notification::set_hint(const std::string &given_key, const bool given_value) {
+    GVariant* value_g_variant = g_variant_new_boolean(given_value);
     notify_notification_set_hint(
         this->state->m_notification.get(),
         given_key.c_str(),
-        reinterpret_cast<GVariant *>(given_value));
+        value_g_variant);
     return *this;
 }
 
 Notification & Notification::add_action(const std::string &given_id, const std::string &given_label,
     ActionCallback given_callback) {
+
+    auto* persistent_state = new std::shared_ptr(this->state);
+
     notify_notification_add_action(
         this->state->m_notification.get(),
         given_id.c_str(),
         given_label.c_str(),
         NOTIFY_ACTION_CALLBACK(Notification::action_callback_trampoline),
-        this->state.get(),
-        nullptr);
+        persistent_state,
+        [](gpointer data) {
+            delete static_cast<std::shared_ptr<State>*>(data);
+        });
     this->state->m_callbacks.emplace(given_id, given_callback);
     return *this;
 }
@@ -132,7 +142,7 @@ std::string Notification::get_summary() const {
     if (summary_char != nullptr) {
         summary = summary_char;
     }
-    g_object_unref(summary_char);
+    g_free(summary_char);
     return summary;
 }
 
@@ -143,7 +153,7 @@ std::string Notification::get_body() const {
     if (body_char != nullptr) {
         body = body_char;
     }
-    g_object_unref(body_char);
+    g_free(body_char);
     return body;
 }
 
@@ -154,7 +164,7 @@ std::string Notification::get_icon() const {
     if (icon_char != nullptr) {
         icon = icon_char;
     }
-    g_object_unref(icon_char);
+    g_free(icon_char);
     return icon;
 }
 
@@ -164,20 +174,27 @@ void Notification::set_app_name(const std::string &name) {
 
 void Notification::action_callback_trampoline(NotifyNotification *n, const char *action, void *user_data) {
     const auto* state_ptr = static_cast<std::shared_ptr<State>*>(user_data);
+    std::shared_ptr<State> state_shared = *state_ptr;
 
-    if (state_ptr->get()->m_callbacks.contains(action)) {
-        state_ptr->get()->m_callbacks[action](*state_ptr, action);
+    if (state_shared->m_callbacks.contains(action)) {
+        state_shared->m_callbacks.at(action)(state_shared, action);
     }
 }
 
 bool Notification::show() const {
-    GError* error;
+    GError* error = nullptr;
     notify_notification_show(this->state->m_notification.get(), &error);
-    return error;
+    if (error) {
+        return false;
+    }
+    return true;
 }
 
 bool Notification::close() const {
-    GError* error;
+    GError* error = nullptr;
     notify_notification_close(this->state->m_notification.get(), &error);
-    return error;
+    if (error) {
+        return false;
+    }
+    return true;
 }
