@@ -185,6 +185,7 @@ bool Notification::show() const {
     GError* error = nullptr;
     notify_notification_show(this->state->m_notification.get(), &error);
     if (error) {
+        g_error_free(error);
         return false;
     }
     return true;
@@ -194,6 +195,7 @@ bool Notification::close() const {
     GError* error = nullptr;
     notify_notification_close(this->state->m_notification.get(), &error);
     if (error) {
+        g_error_free(error);
         return false;
     }
     return true;
