@@ -1,7 +1,7 @@
 #include "Notification.h"
 #include <libnotify/notify.h>
 
-std::string Notification::app_name;
+std::string Notification::app_name = "Unnamed App";
 std::once_flag Notification::initialised;
 
 void Notification::Notification_Deleter::operator()(NotifyNotification *n) const {
