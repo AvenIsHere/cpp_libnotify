@@ -8,5 +8,5 @@ pkg_check_modules(LIBNOTIFY REQUIRED libnotify)
 
 add_library(cpp_libnotify STATIC Notification.cpp)
 
-target_include_directories(cpp_libnotify PRIVATE ${LIBNOTIFY_INCLUDE_DIRS})
-target_link_libraries(cpp_libnotify PRIVATE ${LIBNOTIFY_LIBRARIES})
+target_include_directories(cpp_libnotify PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBNOTIFY_INCLUDE_DIRS})
+target_link_libraries(cpp_libnotify PUBLIC ${LIBNOTIFY_LIBRARIES})
