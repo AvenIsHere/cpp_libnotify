@@ -34,6 +34,9 @@ private:
 
     struct State : std::enable_shared_from_this<State> {
         notify_notification m_notification;
+        std::string summary;
+        std::string body;
+        std::string icon;
         std::map<std::string, ActionCallback> m_callbacks;
 
         explicit State(NotifyNotification *n) : m_notification(n) {
@@ -52,11 +55,7 @@ public:
                           const std::string &given_body,
                           const std::string &given_icon = "");
 
-    explicit Notification(notify_notification given_notification);
-
     // setters (they return references themselves to make chaining possible)
-    Notification &set_notification(notify_notification given_notification);
-
     Notification &set_summary(const std::string &given_summary);
 
     Notification &set_body(const std::string &given_body);
@@ -78,8 +77,6 @@ public:
                              ActionCallback given_callback);
 
     // getters
-    [[nodiscard]] const NotifyNotification *get() const;
-
     [[nodiscard]] std::string get_summary() const;
 
     [[nodiscard]] std::string get_body() const;

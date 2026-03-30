@@ -30,16 +30,10 @@ Notification::Notification(const std::string &given_summary, const std::string &
             given_summary.c_str(),
             given_body.c_str(),
             given_icon.c_str());
+    this->state->summary = given_summary;
+    this->state->body = given_body;
+    this->state->icon = given_icon;
     this->state = std::make_shared<State>(notification);
-}
-
-Notification::Notification(notify_notification given_notification) {
-    this->state = std::make_shared<State>(given_notification.release());
-}
-
-Notification & Notification::set_notification(notify_notification given_notification) {
-    this->state->m_notification = std::move(given_notification);
-    return *this;
 }
 
 Notification & Notification::set_summary(const std::string &given_summary) {
@@ -48,6 +42,7 @@ Notification & Notification::set_summary(const std::string &given_summary) {
         given_summary.c_str(),
         this->get_body().c_str(),
         this->get_icon().c_str());
+    this->state->summary = given_summary;
     return *this;
 }
 
@@ -57,6 +52,7 @@ Notification & Notification::set_body(const std::string &given_body) {
         this->get_summary().c_str(),
         given_body.c_str(),
         this->get_icon().c_str());
+    this->state->body = given_body;
     return *this;
 }
 
@@ -66,6 +62,7 @@ Notification & Notification::set_icon(const std::string &given_icon) {
         this->get_summary().c_str(),
         this->get_body().c_str(),
         given_icon.c_str());
+    this->state->icon = given_icon;
     return *this;
 }
 
@@ -131,41 +128,16 @@ Notification & Notification::add_action(const std::string &given_id, const std::
     return *this;
 }
 
-const NotifyNotification * Notification::get() const {
-    return this->state->m_notification.get();
-}
-
 std::string Notification::get_summary() const {
-    std::string summary;
-    char* summary_char = nullptr;
-    g_object_get(this->state->m_notification.get(), "summary", &summary_char, NULL);
-    if (summary_char != nullptr) {
-        summary = summary_char;
-    }
-    g_free(summary_char);
-    return summary;
+    return this->state->summary;
 }
 
 std::string Notification::get_body() const {
-    std::string body;
-    char* body_char = nullptr;
-    g_object_get(this->state->m_notification.get(), "body", &body_char, NULL);
-    if (body_char != nullptr) {
-        body = body_char;
-    }
-    g_free(body_char);
-    return body;
+    return this->state->body;
 }
 
 std::string Notification::get_icon() const {
-    std::string icon;
-    char* icon_char = nullptr;
-    g_object_get(this->state->m_notification.get(), "icon", &icon_char, NULL);
-    if (icon_char != nullptr) {
-        icon = icon_char;
-    }
-    g_free(icon_char);
-    return icon;
+    return this->state->icon;
 }
 
 void Notification::set_app_name(const std::string &name) {
