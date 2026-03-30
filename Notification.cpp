@@ -1,4 +1,4 @@
-#include "library.h"
+#include "Notification.h"
 #include <libnotify/notify.h>
 
 std::string Notification::app_name;
