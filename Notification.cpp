@@ -34,10 +34,11 @@ Notification::Notification(const std::string &given_summary, const std::string &
             given_summary.c_str(),
             given_body.c_str(),
             given_icon.c_str());
+    this->state = std::make_shared<State>(notification);
     this->state->summary = given_summary;
     this->state->body = given_body;
     this->state->icon = given_icon;
-    this->state = std::make_shared<State>(notification);
+    this->state->m_callbacks = std::map<std::string, ActionCallback>();
 }
 
 Notification & Notification::set_summary(const std::string &given_summary) {
