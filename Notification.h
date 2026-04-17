@@ -89,9 +89,9 @@ public:
     static void action_callback_trampoline(NotifyNotification *n, const char *action, void *user_data);
 
     // member functions
-    [[nodiscard]] bool show() const;
+    bool show() const;
 
-    [[nodiscard]] bool close() const;
+    bool close() const;
 
     // prevents copying
     Notification(const Notification &) = delete;
