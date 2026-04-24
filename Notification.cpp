@@ -158,22 +158,20 @@ void Notification::action_callback_trampoline(NotifyNotification *n, const char 
     }
 }
 
-bool Notification::show() const {
+void Notification::show() const {
     GError* error = nullptr;
     notify_notification_show(this->state->m_notification.get(), &error);
     if (error) {
         g_error_free(error);
-        return false;
+        throw std::runtime_error("Notification could not show");
     }
-    return true;
 }
 
-bool Notification::close() const {
+void Notification::close() const {
     GError* error = nullptr;
     notify_notification_close(this->state->m_notification.get(), &error);
     if (error) {
         g_error_free(error);
-        return false;
+        throw std::runtime_error("Notification could not close");
     }
-    return true;
 }
