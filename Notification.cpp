@@ -94,6 +94,7 @@ Notification & Notification::set_hint(const std::string &given_key, const int gi
         this->state->m_notification.get(),
         given_key.c_str(),
         value_g_variant);
+    g_variant_unref(value_g_variant);
     return *this;
 }
 
@@ -103,6 +104,7 @@ Notification & Notification::set_hint(const std::string &given_key, const std::s
         this->state->m_notification.get(),
         given_key.c_str(),
         value_g_variant);
+    g_variant_unref(value_g_variant);
     return *this;
 }
 
@@ -112,6 +114,7 @@ Notification & Notification::set_hint(const std::string &given_key, const bool g
         this->state->m_notification.get(),
         given_key.c_str(),
         value_g_variant);
+    g_variant_unref(value_g_variant);
     return *this;
 }
 
