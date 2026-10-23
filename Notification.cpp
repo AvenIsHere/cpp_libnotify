@@ -151,6 +151,9 @@ std::string Notification::get_icon() const {
 
 void Notification::set_app_name(const std::string &name) {
     app_name = name;
+    if (!notify_is_initted()) {
+        notify_set_app_name(name.c_str());
+    }
 }
 
 void Notification::action_callback_trampoline(NotifyNotification *n, const char *action, void *user_data) {
