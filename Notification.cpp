@@ -125,7 +125,7 @@ Notification & Notification::set_hint(const std::string &given_key, const bool g
 Notification & Notification::add_action(const std::string &given_id, const std::string &given_label,
     ActionCallback given_callback) {
 
-    auto* persistent_state = new std::shared_ptr(this->state);
+    auto* persistent_state = new std::weak_ptr(this->state);
 
     notify_notification_add_action(
         this->state->m_notification.get(),
@@ -134,7 +134,7 @@ Notification & Notification::add_action(const std::string &given_id, const std::
         NOTIFY_ACTION_CALLBACK(Notification::action_callback_trampoline),
         persistent_state,
         [](gpointer data) {
-            delete static_cast<std::shared_ptr<State>*>(data);
+            delete static_cast<std::weak_ptr<State>*>(data);
         });
     this->state->m_callbacks.emplace(given_id, given_callback);
     return *this;
@@ -157,11 +157,13 @@ void Notification::set_app_name(const std::string &name) {
 }
 
 void Notification::action_callback_trampoline(NotifyNotification *n, const char *action, void *user_data) {
-    const auto* state_ptr = static_cast<std::shared_ptr<State>*>(user_data);
-    std::shared_ptr<State> state_shared = *state_ptr;
+    const auto* state_ptr = static_cast<std::weak_ptr<State>*>(user_data);
+    const std::weak_ptr<State> state_shared = *state_ptr;
 
-    if (state_shared->m_callbacks.contains(action)) {
-        state_shared->m_callbacks.at(action)(state_shared, action);
+    const auto ptr = state_shared.lock();
+    if (!ptr) { return; }
+    if (ptr->m_callbacks.contains(action)) {
+        ptr->m_callbacks.at(action)(state_shared, action);
     }
 }
 

@@ -30,7 +30,7 @@ private:
     };
 
     using notify_notification = std::unique_ptr<NotifyNotification, Notification_Deleter>;
-    using ActionCallback = std::function<void(std::shared_ptr<State>, const std::string &)>;
+    using ActionCallback = std::function<void(std::weak_ptr<State>, const std::string &)>;
 
     struct State : std::enable_shared_from_this<State> {
         notify_notification m_notification;
