@@ -37,7 +37,7 @@ private:
         std::string summary;
         std::string body;
         std::string icon;
-        std::map<std::string, ActionCallback> m_callbacks;
+        std::map<std::string, std::shared_ptr<ActionCallback>> m_callbacks;
 
         explicit State(NotifyNotification *n) : m_notification(n) {
         }
@@ -75,7 +75,7 @@ public:
 
     Notification &add_action(const std::string &given_id,
                              const std::string &given_label,
-                             ActionCallback given_callback);
+                             const ActionCallback& given_callback);
 
     // getters
     [[nodiscard]] std::string get_summary() const;

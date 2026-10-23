@@ -38,7 +38,6 @@ Notification::Notification(const std::string &given_summary, const std::string &
     this->state->summary = given_summary;
     this->state->body = given_body;
     this->state->icon = given_icon;
-    this->state->m_callbacks = std::map<std::string, ActionCallback>();
 }
 
 Notification & Notification::set_summary(const std::string &given_summary) {
@@ -120,7 +119,7 @@ Notification & Notification::set_hint(const std::string &given_key, const bool g
 }
 
 Notification & Notification::add_action(const std::string &given_id, const std::string &given_label,
-    ActionCallback given_callback) {
+    const ActionCallback& given_callback) {
 
     auto* persistent_state = new std::weak_ptr(this->state);
 
@@ -133,7 +132,7 @@ Notification & Notification::add_action(const std::string &given_id, const std::
         [](gpointer data) {
             delete static_cast<std::weak_ptr<State>*>(data);
         });
-    this->state->m_callbacks.insert_or_assign(given_id, given_callback);
+    this->state->m_callbacks.insert_or_assign(given_id, std::make_shared<ActionCallback>(given_callback));
     return *this;
 }
 
@@ -162,8 +161,9 @@ void Notification::action_callback_trampoline(NotifyNotification *n, const char 
 
     const auto ptr = state_weak.lock();
     if (!ptr) { return; }
-    if (ptr->m_callbacks.contains(action)) {
-        ptr->m_callbacks.at(action)(state_weak, action);
+    if (const auto entry = ptr->m_callbacks.find(action); entry != ptr->m_callbacks.end()) {
+        const auto callback = entry->second;
+        (*callback)(state_weak, action);
     }
 }
 
