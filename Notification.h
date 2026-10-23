@@ -68,6 +68,7 @@ public:
 
     Notification &set_hint(const std::string &given_key, int given_value);
 
+    Notification &set_hint(const std::string &given_key, const char* given_value);
     Notification &set_hint(const std::string &given_key, const std::string &given_value);
 
     Notification &set_hint(const std::string &given_key, bool given_value);

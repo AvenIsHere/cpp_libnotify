@@ -98,14 +98,18 @@ Notification & Notification::set_hint(const std::string &given_key, const int gi
     return *this;
 }
 
-Notification & Notification::set_hint(const std::string &given_key, const std::string &given_value) {
-    GVariant* value_g_variant = g_variant_new_string(given_value.c_str());
+Notification & Notification::set_hint(const std::string &given_key, const char *given_value) {
+    GVariant* value_g_variant = g_variant_new_string(given_value);
     notify_notification_set_hint(
         this->state->m_notification.get(),
         given_key.c_str(),
         value_g_variant);
     g_variant_unref(value_g_variant);
     return *this;
+}
+
+Notification &Notification::set_hint(const std::string &given_key, const std::string &given_value) {
+    return this->set_hint(given_key, given_value.c_str());
 }
 
 Notification & Notification::set_hint(const std::string &given_key, const bool given_value) {

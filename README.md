@@ -1,5 +1,5 @@
 # cpp_libnotify
-A modern RAII C++17 wrapper for `libnotify`
+A modern RAII C++20 wrapper for `libnotify`
 
 ## Licence
 Licensed under the MIT Licence
