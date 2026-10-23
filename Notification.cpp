@@ -94,7 +94,6 @@ Notification & Notification::set_hint(const std::string &given_key, const int gi
         this->state->m_notification.get(),
         given_key.c_str(),
         value_g_variant);
-    g_variant_unref(value_g_variant);
     return *this;
 }
 
@@ -104,7 +103,6 @@ Notification & Notification::set_hint(const std::string &given_key, const char *
         this->state->m_notification.get(),
         given_key.c_str(),
         value_g_variant);
-    g_variant_unref(value_g_variant);
     return *this;
 }
 
@@ -118,7 +116,6 @@ Notification & Notification::set_hint(const std::string &given_key, const bool g
         this->state->m_notification.get(),
         given_key.c_str(),
         value_g_variant);
-    g_variant_unref(value_g_variant);
     return *this;
 }
 
@@ -136,7 +133,7 @@ Notification & Notification::add_action(const std::string &given_id, const std::
         [](gpointer data) {
             delete static_cast<std::weak_ptr<State>*>(data);
         });
-    this->state->m_callbacks.emplace(given_id, given_callback);
+    this->state->m_callbacks.insert_or_assign(given_id, given_callback);
     return *this;
 }
 
@@ -158,12 +155,12 @@ void Notification::set_app_name(const std::string &name) {
 
 void Notification::action_callback_trampoline(NotifyNotification *n, const char *action, void *user_data) {
     const auto* state_ptr = static_cast<std::weak_ptr<State>*>(user_data);
-    const std::weak_ptr<State> state_shared = *state_ptr;
+    const std::weak_ptr<State> state_weak = *state_ptr;
 
-    const auto ptr = state_shared.lock();
+    const auto ptr = state_weak.lock();
     if (!ptr) { return; }
     if (ptr->m_callbacks.contains(action)) {
-        ptr->m_callbacks.at(action)(state_shared, action);
+        ptr->m_callbacks.at(action)(state_weak, action);
     }
 }
 
